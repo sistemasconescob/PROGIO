@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: progio_db
+    environment:
+      POSTGRES_USER: progio
+      POSTGRES_PASSWORD: progio123
+      POSTGRES_DB: progio
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U progio -d progio"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - progio_network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: progio_api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://progio:progio123@db:5432/progio
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+    networks:
+      - progio_network
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: progio_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - progio_network
+
+volumes:
+  postgres_data:
+
+networks:
+  progio_network:
+    driver: bridge
