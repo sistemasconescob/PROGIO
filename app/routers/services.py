@@ -28,6 +28,11 @@ from app.services.indicator_service import calculate_environmental_impact
 router = APIRouter(prefix="/services", tags=["Servicios"])
 
 
+def _ev(v) -> str:
+    """Return enum .value or the string itself — handles both enum members and raw DB strings."""
+    return v.value if hasattr(v, "value") else str(v)
+
+
 async def _get_service_or_404(db: AsyncSession, service_id: UUID) -> Service:
     result = await db.execute(select(Service).where(Service.id == service_id))
     svc = result.scalar_one_or_none()
@@ -162,16 +167,16 @@ async def start_service(
 ):
     svc = await _get_service_or_404(db, service_id)
     if svc.status != ServiceStatus.PENDING:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"El servicio no está pendiente (estado: {svc.status.value})")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"El servicio no está pendiente (estado: {_ev(svc.status)})")
 
-    before = {"status": svc.status.value}
+    before = {"status": _ev(svc.status)}
     svc.status = ServiceStatus.IN_PROCESS
     svc.operator_id = body.operator_id
     svc.started_at = datetime.now(timezone.utc)
     await _add_event(db, svc, EventType.STARTED, current_user, description="Servicio iniciado",
                      event_metadata={"operator_id": str(body.operator_id)})
     await log_action(db, "service_started", "service", str(service_id), user_id=current_user.id,
-                     before_state=before, after_state={"status": svc.status.value})
+                     before_state=before, after_state={"status": _ev(svc.status)})
     return svc
 
 
@@ -204,11 +209,11 @@ async def pause_service(
     svc = await _get_service_or_404(db, service_id)
     if svc.status != ServiceStatus.IN_PROCESS:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Solo se puede pausar un servicio en proceso")
-    before = {"status": svc.status.value}
+    before = {"status": _ev(svc.status)}
     svc.status = ServiceStatus.ON_HOLD
     await _add_event(db, svc, EventType.PAUSED, current_user, description=body.reason)
     await log_action(db, "service_paused", "service", str(service_id), user_id=current_user.id,
-                     before_state=before, after_state={"status": svc.status.value})
+                     before_state=before, after_state={"status": _ev(svc.status)})
     return svc
 
 
@@ -221,11 +226,11 @@ async def resume_service(
     svc = await _get_service_or_404(db, service_id)
     if svc.status != ServiceStatus.ON_HOLD:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El servicio no está pausado")
-    before = {"status": svc.status.value}
+    before = {"status": _ev(svc.status)}
     svc.status = ServiceStatus.IN_PROCESS
     await _add_event(db, svc, EventType.RESUMED, current_user)
     await log_action(db, "service_resumed", "service", str(service_id), user_id=current_user.id,
-                     before_state=before, after_state={"status": svc.status.value})
+                     before_state=before, after_state={"status": _ev(svc.status)})
     return svc
 
 
@@ -274,7 +279,7 @@ async def finish_service(
 
     await validate_service_can_close(svc)
 
-    before = {"status": svc.status.value}
+    before = {"status": _ev(svc.status)}
     svc.status = ServiceStatus.FINISHED
     svc.finished_at = datetime.now(timezone.utc)
 
@@ -283,7 +288,7 @@ async def finish_service(
     await _add_event(db, svc, EventType.FINISHED, current_user,
                      description=body.notes, env_impact=env_impact)
     await log_action(db, "service_finished", "service", str(service_id), user_id=current_user.id,
-                     before_state=before, after_state={"status": svc.status.value})
+                     before_state=before, after_state={"status": _ev(svc.status)})
     return svc
 
 
@@ -297,11 +302,11 @@ async def cancel_service(
     svc = await _get_service_or_404(db, service_id)
     if svc.status in (ServiceStatus.FINISHED, ServiceStatus.CANCELLED):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El servicio ya fue finalizado o cancelado")
-    before = {"status": svc.status.value}
+    before = {"status": _ev(svc.status)}
     svc.status = ServiceStatus.CANCELLED
     await _add_event(db, svc, EventType.CANCELLED, current_user, description=body.reason)
     await log_action(db, "service_cancelled", "service", str(service_id), user_id=current_user.id,
-                     before_state=before, after_state={"status": svc.status.value})
+                     before_state=before, after_state={"status": _ev(svc.status)})
     return svc
 
 
@@ -315,12 +320,12 @@ async def reprocess_service(
     svc = await _get_service_or_404(db, service_id)
     if svc.status != ServiceStatus.FINISHED:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Solo se pueden reprocesar servicios finalizados")
-    before = {"status": svc.status.value}
+    before = {"status": _ev(svc.status)}
     svc.status = ServiceStatus.REPROCESSED
     svc.compliance_format_completed = False
     await _add_event(db, svc, EventType.REPROCESSED, current_user, description=body.reason)
     await log_action(db, "service_reprocessed", "service", str(service_id), user_id=current_user.id,
-                     before_state=before, after_state={"status": svc.status.value})
+                     before_state=before, after_state={"status": _ev(svc.status)})
     return svc
 
 

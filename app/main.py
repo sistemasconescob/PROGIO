@@ -4,6 +4,11 @@ from contextlib import asynccontextmanager
 
 from app.routers import auth, users, roles, contracts, clients, vehicles, services, supplies, prefactura, reports, audit
 from app.routers.prefactura import env_router
+from app.routers import inventory, consulting
+
+# Import models so SQLAlchemy picks them up for migrations
+import app.models.inventory  # noqa: F401
+import app.models.consulting  # noqa: F401
 
 
 @asynccontextmanager
@@ -40,6 +45,8 @@ app.include_router(prefactura.router)
 app.include_router(env_router)
 app.include_router(reports.router)
 app.include_router(audit.router)
+app.include_router(inventory.router)
+app.include_router(consulting.router)
 
 
 @app.get("/", tags=["Health"])

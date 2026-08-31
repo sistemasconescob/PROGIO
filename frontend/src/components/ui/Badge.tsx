@@ -42,6 +42,7 @@ const variantConfig: Record<string, string> = {
   success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   warning: 'bg-amber-50 text-amber-700 border-amber-200',
   danger:  'bg-red-50 text-red-700 border-red-200',
+  error:   'bg-red-50 text-red-700 border-red-200',
 }
 
 const sizeConfig: Record<string, string> = {
@@ -52,7 +53,7 @@ const sizeConfig: Record<string, string> = {
 interface BadgeProps {
   children: React.ReactNode
   className?: string
-  variant?: 'default' | 'info' | 'success' | 'warning' | 'danger'
+  variant?: 'default' | 'info' | 'success' | 'warning' | 'danger' | 'error'
   size?: 'sm' | 'md'
 }
 

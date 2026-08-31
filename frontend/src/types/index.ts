@@ -30,17 +30,31 @@ export interface ContractSede {
   is_active: boolean
 }
 
+export interface ContractContact {
+  id: string
+  contract_id: string
+  full_name: string
+  position?: string
+  phone?: string
+  email?: string
+  created_at: string
+}
+
 export interface Contract {
   id: string
   code: string
   name: string
   type: ContractType
+  nit?: string
+  business_name?: string
+  economic_group?: string
   client_company?: string
   status: ContractStatus
   start_date: string
   end_date: string
   description?: string
   sedes: ContractSede[]
+  contacts: ContractContact[]
   created_at: string
 }
 
@@ -156,6 +170,155 @@ export interface PreFactura {
   created_at: string
   items: PreFacturaItem[]
 }
+
+// ── Inventory module ──────────────────────────────────────────────
+
+export interface InventoryPeriodItem {
+  id: string
+  period_id: string
+  supply_id: string
+  supply?: { id: string; name: string; unit: string }
+  initial_stock: number
+  entries: number
+  adjustments: number
+  final_stock_physical?: number
+  theoretical_consumption: number
+  difference?: number
+  deviation_pct?: number
+}
+
+export interface InventoryPeriod {
+  id: string
+  contract_id: string
+  sede_id?: string
+  workstation?: string
+  period_label: string
+  period_start: string
+  period_end: string
+  period_type: string
+  status: 'open' | 'reconciling' | 'closed'
+  notes?: string
+  created_by_id: string
+  closed_by_id?: string
+  created_at: string
+  closed_at?: string
+  items: InventoryPeriodItem[]
+}
+
+export interface ServiceCostWeight {
+  id: string
+  formula_version: string
+  service_type: string
+  weight: number
+  is_active: boolean
+  notes?: string
+  created_at: string
+}
+
+// ── Consulting module ─────────────────────────────────────────────
+
+export type AssignmentStatus =
+  | 'draft' | 'pending_docs' | 'internal_validation' | 'sent_to_client'
+  | 'pending_client' | 'approved' | 'in_operation' | 'pending_closure'
+  | 'finalized' | 'suspended' | 'cancelled'
+
+export interface ConsultantDocument {
+  id: string
+  consultant_id: string
+  doc_type: string
+  name: string
+  file_url?: string
+  issued_at?: string
+  expires_at?: string
+  is_critical: boolean
+  notes?: string
+  uploaded_by_id: string
+  created_at: string
+}
+
+export interface Consultant {
+  id: string
+  full_name: string
+  document_type?: string
+  document_number?: string
+  email?: string
+  phone?: string
+  specialty?: string
+  is_active: boolean
+  user_id?: string
+  notes?: string
+  created_at: string
+  documents: ConsultantDocument[]
+}
+
+export interface AssignmentEvent {
+  id: string
+  assignment_id: string
+  event_type: string
+  user_id: string
+  description?: string
+  event_metadata?: Record<string, unknown>
+  created_at: string
+}
+
+export interface ClosureReportBrief {
+  id: string
+  internal_status: 'pending' | 'approved' | 'rejected'
+  client_status: 'pending' | 'approved' | 'rejected'
+  created_at: string
+}
+
+export interface Assignment {
+  id: string
+  code: string
+  contract_id: string
+  consultant_id: string
+  position?: string
+  location?: string
+  client_reference?: string
+  status: AssignmentStatus
+  opened_at: string
+  closed_at?: string
+  notes?: string
+  created_by_id: string
+  created_at: string
+  events: AssignmentEvent[]
+  closure_report?: ClosureReportBrief
+}
+
+export interface ClosureReportAttachment {
+  id: string
+  report_id: string
+  file_name: string
+  file_url?: string
+  attachment_type: string
+  notes?: string
+  uploaded_by_id: string
+  created_at: string
+}
+
+export interface ClosureReport {
+  id: string
+  assignment_id: string
+  internal_status: 'pending' | 'approved' | 'rejected'
+  internal_validated_by_id?: string
+  internal_validated_at?: string
+  internal_notes?: string
+  client_status: 'pending' | 'approved' | 'rejected'
+  client_validated_at?: string
+  client_validator_name?: string
+  client_notes?: string
+  content?: Record<string, unknown>
+  narrative?: string
+  template_version: string
+  notes?: string
+  created_by_id: string
+  created_at: string
+  updated_at: string
+  attachments: ClosureReportAttachment[]
+}
+
+// ─────────────────────────────────────────────────────────────────
 
 export interface EnvironmentalConfig {
   id: string

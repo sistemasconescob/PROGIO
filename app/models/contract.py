@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Enum, Numeric
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
@@ -31,9 +31,13 @@ class Contract(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     code = Column(String(50), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
-    type = Column(Enum(ContractType, native_enum=False), nullable=False)
+    type = Column(String(50), nullable=False)
+    # Identificación del cliente
+    nit = Column(String(30), nullable=True)
+    business_name = Column(String(255), nullable=True)
+    economic_group = Column(String(255), nullable=True)
     client_company = Column(String(255), nullable=True)
-    status = Column(Enum(ContractStatus, native_enum=False), default=ContractStatus.ACTIVE, nullable=False)
+    status = Column(String(50), default="active", nullable=False)
     start_date = Column(DateTime(timezone=True), nullable=False)
     end_date = Column(DateTime(timezone=True), nullable=False)
     description = Column(Text, nullable=True)
@@ -42,6 +46,7 @@ class Contract(Base):
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     sedes = relationship("ContractSede", back_populates="contract", lazy="selectin")
+    contacts = relationship("ContractContact", back_populates="contract", lazy="selectin", cascade="all, delete-orphan")
     fleets = relationship("Fleet", back_populates="contract")
     user_roles = relationship("UserContractRole", back_populates="contract")
     services = relationship("Service", back_populates="contract")
@@ -49,6 +54,21 @@ class Contract(Base):
     prefacturas = relationship("PreFactura", back_populates="contract")
     operational_costs = relationship("OperationalCost", back_populates="contract")
     created_by = relationship("User", foreign_keys=[created_by_id])
+
+
+class ContractContact(Base):
+    """Personas de contacto asociadas al contrato."""
+    __tablename__ = "contract_contacts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id", ondelete="CASCADE"), nullable=False)
+    full_name = Column(String(255), nullable=False)
+    position = Column(String(100), nullable=True)
+    phone = Column(String(30), nullable=True)
+    email = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+
+    contract = relationship("Contract", back_populates="contacts")
 
 
 class ContractSede(Base):
@@ -87,7 +107,7 @@ class OperationalCost(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id", ondelete="CASCADE"), nullable=False)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("contract_sedes.id", ondelete="CASCADE"), nullable=True)
-    cost_type = Column(Enum(CostType, native_enum=False), nullable=False)
+    cost_type = Column(String(50), nullable=False)
     description = Column(String(255), nullable=False)
     amount = Column(Numeric(15, 2), nullable=False)
     period = Column(String(7), nullable=False)

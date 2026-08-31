@@ -16,13 +16,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   const fetchMe = useCallback(async () => {
-    const token = localStorage.getItem('access_token')
+    const token = sessionStorage.getItem('access_token')
     if (!token) { setLoading(false); return }
     try {
       const { data } = await getMe()
       setUser(data)
     } catch {
-      localStorage.clear()
+      sessionStorage.clear()
     } finally {
       setLoading(false)
     }
@@ -32,13 +32,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (username: string, password: string) => {
     const { data } = await apiLogin(username, password)
-    localStorage.setItem('access_token', data.access_token)
-    localStorage.setItem('refresh_token', data.refresh_token)
+    sessionStorage.setItem('access_token', data.access_token)
+    sessionStorage.setItem('refresh_token', data.refresh_token)
     await fetchMe()
   }
 
   const logout = () => {
-    localStorage.clear()
+    sessionStorage.clear()
     setUser(null)
   }
 

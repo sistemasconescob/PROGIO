@@ -19,6 +19,10 @@ from app.services.contract_rules import generate_prefactura_code
 router = APIRouter(prefix="/prefacturas", tags=["Prefacturación"])
 
 
+def _ev(v) -> str:
+    return v.value if hasattr(v, "value") else str(v)
+
+
 @router.post("", response_model=PreFacturaResponse, status_code=status.HTTP_201_CREATED, summary="Crear prefactura")
 async def create_prefactura(
     body: PreFacturaCreate,
@@ -128,7 +132,7 @@ async def cancel_prefactura(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prefactura no encontrada")
     if pf.status == PreFacturaStatus.BILLED:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No se puede cancelar una prefactura ya facturada")
-    before = {"status": pf.status.value}
+    before = {"status": _ev(pf.status)}
     pf.status = PreFacturaStatus.CANCELLED
     await log_action(db, "prefactura_cancelled", "prefactura", str(pf_id), user_id=current_user.id, before_state=before)
     return pf

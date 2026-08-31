@@ -8,11 +8,11 @@ import Modal from '../components/ui/Modal'
 import Spinner from '../components/ui/Spinner'
 import { getServices, createService, startService, pauseService, resumeService, finishService, cancelService, completeCompliance } from '../api/services'
 import { getContracts } from '../api/contracts'
-import { getVehicles } from '../api/misc'
+import { getVehicles, getClients } from '../api/misc'
 import { apiError } from '../api/errorMessage'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../contexts/AuthContext'
-import type { Service, Contract, Vehicle, ServiceStatus } from '../types'
+import type { Service, Contract, Vehicle, Client, ServiceStatus } from '../types'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -37,6 +37,7 @@ export default function Services() {
   const [services, setServices] = useState<Service[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ServiceStatus | ''>('')
@@ -52,10 +53,11 @@ export default function Services() {
     try {
       const params: Record<string, unknown> = { limit: 200 }
       if (statusFilter) params.status = statusFilter
-      const [svcRes, cRes, vRes] = await Promise.all([getServices(params), getContracts(), getVehicles()])
+      const [svcRes, cRes, vRes, cliRes] = await Promise.all([getServices(params), getContracts(), getVehicles(), getClients()])
       setServices(svcRes.data)
       setContracts(cRes.data)
       setVehicles(vRes.data)
+      setClients(cliRes.data)
     } finally { setLoading(false) }
   }, [statusFilter])
 
@@ -66,6 +68,16 @@ export default function Services() {
   )
 
   const selectedContract = contracts.find(c => c.id === form.contract_id)
+
+  const vehiclesForContract = (() => {
+    const active = vehicles.filter(v => v.is_active)
+    if (!selectedContract?.client_company) return active
+    const matchingIds = new Set(
+      clients.filter(c => c.company_name === selectedContract.client_company).map(c => c.id)
+    )
+    const byCompany = active.filter(v => v.client_id && matchingIds.has(v.client_id))
+    return byCompany.length > 0 ? byCompany : active
+  })()
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -214,7 +226,7 @@ export default function Services() {
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
             <label className="label">Contrato</label>
-            <select className="select" value={form.contract_id} onChange={e => setForm(f => ({ ...f, contract_id: e.target.value, sede_id: '' }))} required>
+            <select className="select" value={form.contract_id} onChange={e => setForm(f => ({ ...f, contract_id: e.target.value, sede_id: '', vehicle_id: '' }))} required>
               <option value="">Seleccionar contrato...</option>
               {contracts.filter(c => c.status === 'active').map(c => (
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
@@ -236,10 +248,19 @@ export default function Services() {
             <label className="label">Vehículo</label>
             <select className="select" value={form.vehicle_id} onChange={e => setForm(f => ({ ...f, vehicle_id: e.target.value }))} required>
               <option value="">Seleccionar vehículo...</option>
-              {vehicles.filter(v => v.is_active).map(v => (
+              {vehiclesForContract.map(v => (
                 <option key={v.id} value={v.id}>{v.plate} — {v.brand} {v.model}</option>
               ))}
             </select>
+            {selectedContract?.client_company && (() => {
+              const matchingIds = new Set(
+                clients.filter(c => c.company_name === selectedContract.client_company).map(c => c.id)
+              )
+              const count = vehicles.filter(v => v.is_active && v.client_id && matchingIds.has(v.client_id)).length
+              return count > 0
+                ? <p className="mt-1 text-xs text-progio-600">Mostrando {count} vehículo{count !== 1 ? 's' : ''} de <span className="font-semibold">{selectedContract.client_company}</span></p>
+                : <p className="mt-1 text-xs text-slate-400">No hay vehículos registrados para <span className="font-medium">{selectedContract.client_company}</span> — se muestran todos</p>
+            })()}
           </div>
           <div>
             <label className="label">Tipo de servicio</label>

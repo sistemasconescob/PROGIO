@@ -77,14 +77,15 @@ export default function Login() {
 
           <form onSubmit={submit} className="space-y-5">
             <div>
-              <label className="label">Usuario o correo</label>
+              <label className="label">Correo electrónico</label>
               <input
                 className="input"
-                type="text"
-                placeholder="admin"
+                type="email"
+                placeholder="usuario@empresa.com"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 autoFocus
+                autoComplete="email"
               />
             </div>
             <div>

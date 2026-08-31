@@ -5,6 +5,25 @@ from datetime import datetime
 from app.models.contract import ContractType, ContractStatus, CostType
 
 
+class ContractContactCreate(BaseModel):
+    full_name: str
+    position: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+
+
+class ContractContactResponse(BaseModel):
+    id: UUID
+    contract_id: UUID
+    full_name: str
+    position: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class ContractSedeCreate(BaseModel):
     name: str
     address: Optional[str] = None
@@ -26,15 +45,22 @@ class ContractCreate(BaseModel):
     code: str
     name: str
     type: ContractType
+    nit: Optional[str] = None
+    business_name: Optional[str] = None
+    economic_group: Optional[str] = None
     client_company: Optional[str] = None
     start_date: datetime
     end_date: datetime
     description: Optional[str] = None
     sedes: List[ContractSedeCreate] = []
+    contacts: List[ContractContactCreate] = []
 
 
 class ContractUpdate(BaseModel):
     name: Optional[str] = None
+    nit: Optional[str] = None
+    business_name: Optional[str] = None
+    economic_group: Optional[str] = None
     client_company: Optional[str] = None
     status: Optional[ContractStatus] = None
     end_date: Optional[datetime] = None
@@ -46,12 +72,16 @@ class ContractResponse(BaseModel):
     code: str
     name: str
     type: ContractType
+    nit: Optional[str] = None
+    business_name: Optional[str] = None
+    economic_group: Optional[str] = None
     client_company: Optional[str] = None
     status: ContractStatus
     start_date: datetime
     end_date: datetime
     description: Optional[str] = None
     sedes: List[ContractSedeResponse] = []
+    contacts: List[ContractContactResponse] = []
     created_at: datetime
 
     model_config = {"from_attributes": True}

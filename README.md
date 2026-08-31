@@ -196,7 +196,7 @@ docker-compose up --build api
 | Campo | Valor |
 |---|---|
 | **Usuario** | `admin` |
-| **Contraseña** | `admin123` |
+| **Contraseña** | `Admin1234!` |
 
 > El usuario `admin` tiene acceso total al sistema (`is_superuser = true`). Para crear otros usuarios con roles específicos, ingresa al módulo **Usuarios** dentro de la aplicación.
 

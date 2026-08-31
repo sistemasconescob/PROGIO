@@ -6,10 +6,10 @@ import { Badge } from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import Spinner from '../components/ui/Spinner'
-import { getVehicles, createVehicle } from '../api/misc'
+import { getVehicles, createVehicle, getClients } from '../api/misc'
 import { apiError } from '../api/errorMessage'
 import { useToast } from '../hooks/useToast'
-import type { Vehicle } from '../types'
+import type { Vehicle, Client } from '../types'
 
 const vehicleTypeLabel: Record<string, string> = {
   sedan: 'Sedán', suv: 'SUV', pickup: 'Pickup', van: 'Van',
@@ -23,6 +23,7 @@ const fuelLabel: Record<string, string> = {
 export default function Vehicles() {
   const toast = useToast()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
@@ -31,13 +32,15 @@ export default function Vehicles() {
     plate: '', brand: '', model: '',
     year: new Date().getFullYear(),
     vehicle_type: 'sedan', fuel_type: 'gasoline', color: '',
+    client_id: '',
   })
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await getVehicles()
-      setVehicles(res.data)
+      const [vRes, cRes] = await Promise.all([getVehicles(), getClients()])
+      setVehicles(vRes.data)
+      setClients(cRes.data)
     } finally { setLoading(false) }
   }, [])
 
@@ -59,12 +62,13 @@ export default function Vehicles() {
       vehicle_type: form.vehicle_type,
       fuel_type: form.fuel_type,
       color: form.color || undefined,
+      client_id: form.client_id || undefined,
     }
     try {
       await createVehicle(payload)
       toast('success', 'Vehículo registrado')
       setCreateOpen(false)
-      setForm({ plate: '', brand: '', model: '', year: new Date().getFullYear(), vehicle_type: 'sedan', fuel_type: 'gasoline', color: '' })
+      setForm({ plate: '', brand: '', model: '', year: new Date().getFullYear(), vehicle_type: 'sedan', fuel_type: 'gasoline', color: '', client_id: '' })
       load()
     } catch (err) {
       toast('error', apiError(err, 'Error al crear vehículo'))
@@ -90,7 +94,7 @@ export default function Vehicles() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100">
-                    {['Placa', 'Vehículo', 'Tipo', 'Combustible', 'Color', 'Estado'].map(h => (
+                    {['Placa', 'Vehículo', 'Tipo', 'Combustible', 'Cliente', 'Color', 'Estado'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">{h}</th>
                     ))}
                   </tr>
@@ -113,6 +117,11 @@ export default function Vehicles() {
                         </td>
                         <td className="px-4 py-3 text-slate-500">{vehicleTypeLabel[v.vehicle_type] || v.vehicle_type}</td>
                         <td className="px-4 py-3"><Badge variant="info" size="sm">{fuelLabel[v.fuel_type] || v.fuel_type}</Badge></td>
+                        <td className="px-4 py-3">
+                          {v.client_id
+                            ? <span className="text-slate-600 text-xs">{clients.find(c => c.id === v.client_id)?.full_name ?? '—'}</span>
+                            : <span className="text-slate-300 text-xs">Sin asignar</span>}
+                        </td>
                         <td className="px-4 py-3">
                           {v.color
                             ? <span className="text-slate-500 text-xs">{v.color}</span>
@@ -176,6 +185,17 @@ export default function Vehicles() {
             <label className="label">Color (opcional)</label>
             <input className="input" placeholder="Blanco, Negro..."
               value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))} />
+          </div>
+          <div>
+            <label className="label">Empresa / Cliente asociado</label>
+            <select className="select" value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))}>
+              <option value="">Sin asignar</option>
+              {clients.filter(c => c.is_active).map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.full_name}{c.company_name ? ` — ${c.company_name}` : ''}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex gap-2 justify-end pt-2">
             <Button variant="secondary" type="button" onClick={() => setCreateOpen(false)}>Cancelar</Button>

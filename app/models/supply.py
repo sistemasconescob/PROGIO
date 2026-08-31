@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Numeric, Enum
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
@@ -22,7 +22,7 @@ class Supply(Base):
     name = Column(String(255), nullable=False)
     unit = Column(String(30), nullable=False)
     unit_cost = Column(Numeric(15, 4), nullable=False)
-    category = Column(Enum(SupplyCategory, native_enum=False), default=SupplyCategory.OTHER, nullable=False)
+    category = Column(String(50), default="other", nullable=False)
     description = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)

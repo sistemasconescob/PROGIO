@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, Integer, DateTime, ForeignKey, Enum, UniqueConstraint
+from sqlalchemy import Column, String, Boolean, Integer, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
@@ -41,8 +41,8 @@ class Vehicle(Base):
     brand = Column(String(100), nullable=False)
     model = Column(String(100), nullable=False)
     year = Column(Integer, nullable=True)
-    vehicle_type = Column(Enum(VehicleType, native_enum=False), nullable=False)
-    fuel_type = Column(Enum(FuelType, native_enum=False), nullable=False)
+    vehicle_type = Column(String(50), nullable=False)
+    fuel_type = Column(String(50), nullable=False)
     color = Column(String(50), nullable=True)
     client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id"), nullable=True)
     fleet_id = Column(UUID(as_uuid=True), ForeignKey("fleets.id"), nullable=True)
@@ -64,7 +64,7 @@ class VehicleContractConfig(Base):
     vehicle_id = Column(UUID(as_uuid=True), ForeignKey("vehicles.id", ondelete="CASCADE"), nullable=False)
     contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id", ondelete="CASCADE"), nullable=False)
     max_services_per_period = Column(Integer, nullable=False, default=2)
-    period_type = Column(Enum(PeriodType, native_enum=False), default=PeriodType.MONTHLY, nullable=False)
+    period_type = Column(String(50), default="monthly", nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 

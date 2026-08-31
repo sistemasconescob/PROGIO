@@ -2,23 +2,49 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Car, FileText, Users, Package,
   BarChart3, Shield, LogOut, ChevronRight, Droplets,
-  ClipboardList, UserCheck, Receipt, Leaf,
+  ClipboardList, UserCheck, Receipt, Leaf, Boxes,
+  HardHat, Briefcase, Layers,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import clsx from 'clsx'
 
-const nav = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/services', label: 'Servicios', icon: ClipboardList },
-  { to: '/contracts', label: 'Contratos', icon: FileText },
-  { to: '/vehicles', label: 'Vehículos', icon: Car },
-  { to: '/clients', label: 'Clientes', icon: UserCheck },
-  { to: '/users', label: 'Usuarios', icon: Users },
-  { to: '/supplies', label: 'Insumos', icon: Package },
-  { to: '/prebilling', label: 'Pre-Facturación', icon: Receipt },
-  { to: '/env-config', label: 'Indicadores Eco.', icon: Leaf },
-  { to: '/reports', label: 'Reportes', icon: BarChart3 },
-  { to: '/audit', label: 'Auditoría', icon: Shield },
+type NavGroup = { group: string; items: { to: string; label: string; icon: React.ElementType }[] }
+
+const nav: NavGroup[] = [
+  {
+    group: 'General',
+    items: [
+      { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    group: 'Lavado de Vehículos',
+    items: [
+      { to: '/services', label: 'Servicios', icon: ClipboardList },
+      { to: '/contracts', label: 'Contratos', icon: FileText },
+      { to: '/vehicles', label: 'Vehículos', icon: Car },
+      { to: '/clients', label: 'Clientes', icon: UserCheck },
+      { to: '/supplies', label: 'Insumos', icon: Package },
+      { to: '/inventory', label: 'Inventarios', icon: Boxes },
+      { to: '/prebilling', label: 'Pre-Facturación', icon: Receipt },
+    ],
+  },
+  {
+    group: 'Consultoría',
+    items: [
+      { to: '/consultants', label: 'Consultores / HSE', icon: HardHat },
+      { to: '/assignments', label: 'Asignaciones', icon: Briefcase },
+    ],
+  },
+  {
+    group: 'Gestión',
+    items: [
+      { to: '/users', label: 'Usuarios', icon: Users },
+      { to: '/env-config', label: 'Indicadores Eco.', icon: Leaf },
+      { to: '/reports', label: 'Reportes', icon: BarChart3 },
+      { to: '/audit', label: 'Auditoría', icon: Shield },
+    ],
+  },
 ]
 
 export default function Sidebar() {
@@ -38,23 +64,30 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-        {nav.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            className={({ isActive }) => clsx(
-              'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
-              isActive
-                ? 'bg-white/20 text-white shadow-sm'
-                : 'text-progio-200 hover:bg-white/10 hover:text-white'
-            )}
-          >
-            <Icon className="w-4.5 h-4.5 flex-shrink-0" size={18} />
-            <span className="flex-1">{label}</span>
-            <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity" size={14} />
-          </NavLink>
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
+        {nav.map(({ group, items }) => (
+          <div key={group}>
+            <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-progio-400">{group}</p>
+            <div className="space-y-0.5">
+              {items.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === '/'}
+                  className={({ isActive }) => clsx(
+                    'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
+                    isActive
+                      ? 'bg-white/20 text-white shadow-sm'
+                      : 'text-progio-200 hover:bg-white/10 hover:text-white'
+                  )}
+                >
+                  <Icon className="w-4.5 h-4.5 flex-shrink-0" size={18} />
+                  <span className="flex-1">{label}</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity" size={14} />
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 

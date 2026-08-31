@@ -14,6 +14,10 @@ from app.models.contract import OperationalCost
 from app.models.vehicle import Vehicle
 
 
+def _ev(v) -> str:
+    return v.value if hasattr(v, "value") else str(v)
+
+
 async def get_environmental_config(db: AsyncSession, vehicle_type: str, fuel_type: str) -> EnvironmentalConfig | None:
     result = await db.execute(
         select(EnvironmentalConfig).where(
@@ -29,11 +33,13 @@ async def calculate_environmental_impact(
     db: AsyncSession, service: Service
 ) -> Dict[str, Any]:
     """Calcula huella hídrica evitada y huella de carbono para un servicio."""
-    vehicle = service.vehicle
+    if not service.vehicle_id:
+        return {}
+    vehicle = await db.get(Vehicle, service.vehicle_id)
     if not vehicle:
         return {}
 
-    config = await get_environmental_config(db, vehicle.vehicle_type.value, vehicle.fuel_type.value)
+    config = await get_environmental_config(db, _ev(vehicle.vehicle_type), _ev(vehicle.fuel_type))
     if not config:
         return {
             "water_saved_liters": 150.0,
@@ -46,8 +52,8 @@ async def calculate_environmental_impact(
         "water_saved_liters": config.water_saved_per_wash,
         "co2_avoided_kg": co2_avoided,
         "standard_km": config.standard_km,
-        "vehicle_type": vehicle.vehicle_type.value,
-        "fuel_type": vehicle.fuel_type.value,
+        "vehicle_type": _ev(vehicle.vehicle_type),
+        "fuel_type": _ev(vehicle.fuel_type),
     }
 
 

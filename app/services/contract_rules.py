@@ -13,6 +13,10 @@ from app.models.service import Service, ServiceStatus
 from app.models.contract import Contract, ContractStatus
 
 
+def _ev(v) -> str:
+    return v.value if hasattr(v, "value") else str(v)
+
+
 def _get_period_start(period_type: PeriodType) -> datetime:
     now = datetime.now(timezone.utc)
     if period_type == PeriodType.WEEKLY:
@@ -74,7 +78,7 @@ async def check_in_house_service_limit(
     if count >= config.max_services_per_period:
         return (
             f"Límite de servicios alcanzado: {count}/{config.max_services_per_period} "
-            f"en el periodo {config.period_type.value}"
+            f"en el periodo {_ev(config.period_type)}"
         )
     return None
 
@@ -87,7 +91,7 @@ async def validate_contract_active(db: AsyncSession, contract_id: UUID) -> Contr
     if contract.status != ContractStatus.ACTIVE:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Contrato {contract.code} no está activo (estado: {contract.status.value})",
+            detail=f"Contrato {contract.code} no está activo (estado: {_ev(contract.status)})",
         )
     return contract
 

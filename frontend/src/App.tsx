@@ -15,6 +15,9 @@ import Reports from './pages/Reports'
 import Audit from './pages/Audit'
 import PreBilling from './pages/PreBilling'
 import EnvConfig from './pages/EnvConfig'
+import Inventory from './pages/Inventory'
+import Consultants from './pages/Consultants'
+import Assignments from './pages/Assignments'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -39,6 +42,9 @@ export default function App() {
         <Route path="env-config" element={<EnvConfig />} />
         <Route path="reports" element={<Reports />} />
         <Route path="audit" element={<Audit />} />
+        <Route path="inventory" element={<Inventory />} />
+        <Route path="consultants" element={<Consultants />} />
+        <Route path="assignments" element={<Assignments />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

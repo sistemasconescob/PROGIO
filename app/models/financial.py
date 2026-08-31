@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Numeric, Enum, Integer, Float
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Numeric, Integer, Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
@@ -21,7 +21,7 @@ class PreFactura(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     code = Column(String(50), unique=True, nullable=False, index=True)
     contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id"), nullable=False)
-    status = Column(Enum(PreFacturaStatus, native_enum=False), default=PreFacturaStatus.DRAFT, nullable=False)
+    status = Column(String(50), default="draft", nullable=False)
     total_amount = Column(Numeric(15, 2), nullable=False, default=0)
     period_start = Column(DateTime(timezone=True), nullable=False)
     period_end = Column(DateTime(timezone=True), nullable=False)

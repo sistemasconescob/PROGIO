@@ -6,6 +6,8 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
+from sqlalchemy.orm import selectinload
+
 from app.database import get_db
 from app.models.service import Service, ServiceStatus
 from app.models.vehicle import Vehicle
@@ -16,6 +18,10 @@ from app.services.indicator_service import calculate_environmental_impact, get_e
 from app.dependencies import require_permission
 
 router = APIRouter(prefix="/reports", tags=["Reportes"])
+
+
+def _ev(v) -> str:
+    return v.value if hasattr(v, "value") else str(v)
 
 
 def _fmt(v) -> str:
@@ -57,8 +63,8 @@ async def report_services(
         rows_data.append({
             "Código": svc.code,
             "Fecha": _fmt(svc.created_at),
-            "Tipo": svc.service_type.value,
-            "Estado": svc.status.value,
+            "Tipo": _ev(svc.service_type),
+            "Estado": _ev(svc.status),
             "Cumplimiento": "Sí" if svc.compliance_format_completed else "No",
             "Duración (min)": duration or "",
         })
@@ -171,7 +177,7 @@ async def report_pre_billing(
             "Período inicio": _fmt(pf.period_start),
             "Período fin": _fmt(pf.period_end),
             "Total ($)": float(pf.total_amount),
-            "Estado": pf.status.value,
+            "Estado": _ev(pf.status),
         })
 
     columns = ["Código", "Contrato", "Período inicio", "Período fin", "Total ($)", "Estado"]
@@ -197,7 +203,11 @@ async def report_environmental(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_permission("report:environmental")),
 ):
-    query = select(Service).where(Service.status == ServiceStatus.FINISHED)
+    query = (
+        select(Service)
+        .where(Service.status == ServiceStatus.FINISHED)
+        .options(selectinload(Service.vehicle))
+    )
     if contract_id:
         query = query.where(Service.contract_id == contract_id)
     if date_from:
@@ -275,8 +285,8 @@ async def report_operations(
     rows_data = []
 
     for svc in services:
-        by_status[svc.status.value] = by_status.get(svc.status.value, 0) + 1
-        by_type[svc.service_type.value] = by_type.get(svc.service_type.value, 0) + 1
+        by_status[_ev(svc.status)] = by_status.get(_ev(svc.status), 0) + 1
+        by_type[_ev(svc.service_type)] = by_type.get(_ev(svc.service_type), 0) + 1
 
         duration = None
         if svc.started_at and svc.finished_at:
@@ -285,8 +295,8 @@ async def report_operations(
         rows_data.append({
             "Código": svc.code,
             "Fecha": _fmt(svc.created_at),
-            "Tipo servicio": svc.service_type.value,
-            "Estado": svc.status.value,
+            "Tipo servicio": _ev(svc.service_type),
+            "Estado": _ev(svc.status),
             "Duración (min)": duration or "",
         })
 
@@ -458,7 +468,7 @@ async def report_by_type(
     query = query.group_by(Service.service_type).order_by(func.count(Service.id).desc())
 
     result = await db.execute(query)
-    rows_data = [{"Tipo": r[0].value, "Total": r[1]} for r in result.fetchall()]
+    rows_data = [{"Tipo": _ev(r[0]), "Total": r[1]} for r in result.fetchall()]
 
     columns = ["Tipo", "Total"]
     rows = [[r[c] for c in columns] for r in rows_data]
@@ -500,7 +510,7 @@ async def report_times(
 
     by_type: dict = {}
     for svc in services:
-        t = svc.service_type.value
+        t = _ev(svc.service_type)
         dur = (svc.finished_at - svc.started_at).total_seconds() / 60
         if t not in by_type:
             by_type[t] = []

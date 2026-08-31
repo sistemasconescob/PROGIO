@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Enum, JSON
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 import enum
@@ -53,8 +53,8 @@ class Service(Base):
     sede_id = Column(UUID(as_uuid=True), ForeignKey("contract_sedes.id"), nullable=False)
     vehicle_id = Column(UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=False)
     client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id"), nullable=True)
-    service_type = Column(Enum(ServiceType, native_enum=False), nullable=False)
-    status = Column(Enum(ServiceStatus, native_enum=False), default=ServiceStatus.PENDING, nullable=False)
+    service_type = Column(String(50), nullable=False)
+    status = Column(String(50), default="pending", nullable=False)
     operator_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     supervisor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     started_at = Column(DateTime(timezone=True), nullable=True)
@@ -84,7 +84,7 @@ class ServiceEvent(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     service_id = Column(UUID(as_uuid=True), ForeignKey("services.id"), nullable=False)
-    event_type = Column(Enum(EventType, native_enum=False), nullable=False)
+    event_type = Column(String(50), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     role_at_time = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
